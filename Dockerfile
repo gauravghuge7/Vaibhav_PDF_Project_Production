@@ -1,30 +1,23 @@
-# Step 1: Use Node.js as the base image
-FROM node:18-alpine AS builder
+# Step 1: Use an official Node.js image as the base image
+FROM node:18-alpine
 
-# Step 2: Set the working directory in the container
+# Step 2: Set the working directory inside the container
 WORKDIR /app
 
-# Step 3: Copy package.json and package-lock.json to install dependencies
-COPY package.json package-lock.json ./
+# Step 3: Copy package.json and package-lock.json (if it exists)
+COPY package*.json ./
 
-# Step 4: Install dependencies
-RUN npm install
+# Step 4: Install dependencies while suppressing warnings
+RUN npm install --frozen-lockfile --loglevel=error
 
-# Step 5: Copy all application files into the container
+# Step 5: Copy the rest of the project files into the container
 COPY . .
 
-# Step 6: Build the application for production
-RUN npm run build
+# Step 6: Build the Next.js project while ignoring warnings
+RUN npm run build --silent
 
-# Step 7: Use a lightweight Node.js image for serving the app
-FROM node:18-alpine AS runner
-
-# Step 8: Set the working directory and copy the built application
-WORKDIR /app
-COPY --from=builder /app ./
-
-# Step 9: Expose the application port
+# Step 7: Expose port 3000 (default for Next.js)
 EXPOSE 3000
 
-# Step 10: Define the command to run the application
+# Step 8: Start the Next.js app in production mode
 CMD ["npm", "run", "dev"]

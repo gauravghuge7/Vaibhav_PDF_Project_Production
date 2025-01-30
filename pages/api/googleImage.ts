@@ -16,8 +16,8 @@ const openai = new OpenAI({
       timeout: 60000,
 });
 
-const fileManager = new GoogleAIFileManager(process.env.GOOGLE_FILE_MANAGER);
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI);
+const fileManager = new GoogleAIFileManager(process.env.GOOGLE_FILE_MANAGER as string);
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI as string);
 
 const visionClient = new ImageAnnotatorClient({
       keyFilename: 'path-to-your-google-cloud-keyfile.json', // Add your path to the Google Cloud key file
@@ -88,7 +88,7 @@ export default async function handler(req : NextApiRequest, res : NextApiRespons
                   console.log("Uploads directory:", uploadsDir);
 
                   // Target path for saving the file
-                  const targetPath = path.join(uploadsDir, file.originalFilename);
+                  const targetPath = path.join(uploadsDir, file.originalFilename as string);
             
                   // Move the file to the target directory
                   fs.rename(file.filepath, targetPath, async (renameErr) => {
@@ -104,8 +104,8 @@ export default async function handler(req : NextApiRequest, res : NextApiRespons
                         try {
 
                               const uploadResult = await fileManager.uploadFile(targetPath, {
-                                    mimeType: file.mimetype,
-                                    displayName: file.originalFilename,
+                                    mimeType: file.mimetype as string,
+                                    displayName: file.originalFilename as string,
                               });
                         
                               
@@ -127,13 +127,11 @@ export default async function handler(req : NextApiRequest, res : NextApiRespons
                                     },
                               ]);
 
+                              
                               console.log("Result => ", result);
 
-
-
-                              console.log("Modifying ==> ", result?.response?.candidates[0]?.content?.parts[0]?.text);
                               
-                              const text = result?.response?.candidates[0]?.content?.parts[0]?.text;
+                              const text = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text as string || '';
 
                               const response = await openai.images.generate({
                                     model: "dall-e-3",
