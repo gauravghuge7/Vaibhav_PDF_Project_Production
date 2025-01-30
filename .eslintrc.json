@@ -1,3 +1,10 @@
 {
-  "extends": []
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "@next/next/no-img-element": "off",
+    "react/no-unescaped-entities": "off",
+    "no-console": "off",  // Disable no-console warning
+    
+  
+  }
 }
