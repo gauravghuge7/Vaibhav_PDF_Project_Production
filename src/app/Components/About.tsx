@@ -3,16 +3,13 @@
 
 
 import React from "react";
-import { Button } from "@/components/ui/button";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
 const About: React.FC = () => {
-  const handleGeneratePDF = () => {
-    // Function to trigger the PDF generation process
-    console.log("Generating PDF for Ethanol and Billary Water Tank Process Flow...");
-  };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 py-10">

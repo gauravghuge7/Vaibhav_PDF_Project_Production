@@ -54,7 +54,8 @@ export default function UploadForm() {
     } 
     
     catch (err) {
-      console.error("Error submitting file:", err?.response || null);
+      const error = err as string || '';
+      console.error("Error submitting file:", error);
     } 
 
     finally {
@@ -122,41 +123,41 @@ export default function UploadForm() {
 
       {/*   for the after processing the image data will be shown here  */}
       {imageData && (
-  <div className="mt-10 bg-white p-6 shadow-lg rounded-xl">
-    <h2 className="text-2xl font-bold text-gray-800 mb-4">Process Insights</h2>
+        <div className="mt-10 bg-white p-6 shadow-lg rounded-xl">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Process Insights</h2>
 
-    <div className="text-gray-700 space-y-4">
-      {imageData.split("\n").map((line, index) => {
-        if (!line.trim()) return null; // Ignore empty lines
+          <div className="text-gray-700 space-y-4">
+            {imageData.split("\n").map((line, index) => {
+              if (!line.trim()) return null; // Ignore empty lines
 
-        // Dynamically detect sections marked with **
-        if (line.includes("**")) {
-          const sectionTitle = line.replace(/\*\*/g, "").trim(); // Remove '**' and trim spaces
+              // Dynamically detect sections marked with **
+              if (line.includes("**")) {
+                const sectionTitle = line.replace(/\*\*/g, "").trim(); // Remove '**' and trim spaces
 
-          // Render section title with a blue color
-          return (
-            <div key={index}>
-              <h3 className="text-lg font-semibold text-blue-700">{sectionTitle}</h3>
-              <hr className="my-2 border-gray-300" />
-            </div>
-          );
-        }
+                // Render section title with a blue color
+                return (
+                  <div key={index}>
+                    <h3 className="text-lg font-semibold text-blue-700">{sectionTitle}</h3>
+                    <hr className="my-2 border-gray-300" />
+                  </div>
+                );
+              }
 
-        // Dynamically handle lists (lines starting with *)
-        if (line.trim().startsWith("*")) {
-          return (
-            <ul key={index} className="list-disc list-inside">
-              <li>{line.replace("*", "").trim()}</li>
-            </ul>
-          );
-        }
+              // Dynamically handle lists (lines starting with *)
+              if (line.trim().startsWith("*")) {
+                return (
+                  <ul key={index} className="list-disc list-inside">
+                    <li>{line.replace("*", "").trim()}</li>
+                  </ul>
+                );
+              }
 
-        // Render normal text (for content without special formatting)
-        return <p key={index}>{line}</p>;
-      })}
-    </div>
-  </div>
-)}
+              // Render normal text (for content without special formatting)
+              return <p key={index}>{line}</p>;
+            })}
+          </div>
+        </div>
+      )}
 
 
 

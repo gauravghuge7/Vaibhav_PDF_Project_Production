@@ -7,8 +7,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { IncomingForm } from "formidable";
 import path from "path";
 import fs from "fs";
-import { ImageAnnotatorClient } from '@google-cloud/vision';
-
 import OpenAI from "openai";
 
 const openai = new OpenAI({
@@ -19,9 +17,6 @@ const openai = new OpenAI({
 const fileManager = new GoogleAIFileManager(process.env.GOOGLE_FILE_MANAGER as string);
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI as string);
 
-const visionClient = new ImageAnnotatorClient({
-      keyFilename: 'path-to-your-google-cloud-keyfile.json', // Add your path to the Google Cloud key file
-});
 
 export const config = {
   api: {
