@@ -86,12 +86,12 @@ export default async function handler(req : NextApiRequest, res : NextApiRespons
                   const targetPath = path.join(uploadsDir, file.originalFilename as string);
             
                   // Move the file to the target directory
-                  fs.rename(file.filepath, targetPath, async (renameErr) => {
+                  // fs.rename(file.filepath, targetPath, async (renameErr) => {
 
-                        if (renameErr) {
-                        console.error("Error moving file:", renameErr);
-                        return res.status(500).send("Error saving file.");
-                        }
+                  //       if (renameErr) {
+                  //             console.error("Error moving file:", renameErr);
+                  //             return res.status(500).send("Error saving file.");
+                  //       }
             
                         console.log("File successfully saved to:", targetPath);
                   
@@ -154,9 +154,9 @@ export default async function handler(req : NextApiRequest, res : NextApiRespons
                               console.error("Error uploading file to Google AI:", uploadError);
                               return res.status(500).send("Error uploading file to Google AI.");
                         }
+ 
 
-
-                  });
+                  // });
 
                 });
       
