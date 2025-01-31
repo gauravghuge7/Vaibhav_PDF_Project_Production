@@ -25,150 +25,85 @@ export const config = {
 
 
 
-export default async function handler(req : NextApiRequest, res : NextApiResponse ) {
-      
-      console.log(" Route is Running");
-
-      /*** check the post is not a get request ***/
-      if(req.method !==  "POST") {
-            return res 
-            .status(400)
-            .json({
-                  message : "method must be post "
-            })
-            
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+      console.log("Route is Running");
+    
+      if (req.method !== "POST") {
+        return res.status(400).json({ message: "Method must be POST" });
       }
-
-      /*** parse the form data ***/
-      const form = new IncomingForm({
-            keepExtensions: true, // Ensure extensions are kept
-            uploadDir: path.join(process.cwd(), "temp"), // Temporary upload directory
-      });
-        
-      // Ensure the temp directory exists
-      const tempDir = path.join(process.cwd(), "temp");
-
-      if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir, { recursive: true });
-      }
-
-      console.log("Temp directory:", tempDir);
-
-
+    
       try {
-      
-            form.parse(req, async (err, fields, files) => {
-
-                  if (err) {
-                    console.error("Error parsing form:", err);
-                    return res.status(500).send("Error processing file during form parsing.");
-                  }
-            
-                  const file = files.imageFile?.[0];  // Assuming the input field name is "imageFile"
-
-                  console.log("File => ", file);
-
-                  if (!file) {
-                        return res.status(400).send("No file uploaded.");
-                  }
-
-                  const uploadsDir = path.join(process.cwd(), "uploads");
-
-                  // Ensure the uploads directory exists
-                  if (!fs.existsSync(uploadsDir)) {
-                    fs.mkdirSync(uploadsDir, { recursive: true });
-                  }
-            
-                  console.log("Uploads directory:", uploadsDir);
-
-                  // Target path for saving the file
-                  const targetPath = path.join(uploadsDir, file.originalFilename as string);
-            
-                  // Move the file to the target directory
-                  // fs.rename(file.filepath, targetPath, async (renameErr) => {
-
-                  //       if (renameErr) {
-                  //             console.error("Error moving file:", renameErr);
-                  //             return res.status(500).send("Error saving file.");
-                  //       }
-            
-                        console.log("File successfully saved to:", targetPath);
-                  
-                        // Upload to Google AI
-                        try {
-
-                              const uploadResult = await fileManager.uploadFile(targetPath, {
-                                    mimeType: file.mimetype as string,
-                                    displayName: file.originalFilename as string,
-                              });
-                        
-                              
-                              console.log("Insights result => ", uploadResult);
-
-
-
-
-                                          
-                              const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-                              const result = await model.generateContent([
-                                    "give me insights in text format from the image to generate a piping and instrument diagram give easy to generate a diagram",
-                                    {
-                                          fileData: {
-                                                fileUri: uploadResult.file.uri,
-                                                mimeType: uploadResult.file.mimeType,
-                                          },
-                                    },
-                              ]);
-
-                              
-                              console.log("Result => ", result);
-
-                              
-                              const text = result?.response?.candidates?.[0]?.content?.parts?.[0]?.text as string || '';
-
-                              const response = await openai.images.generate({
-                                    model: "dall-e-3",
-                                    prompt: `${text}     this is the above text generate a piping and instrument diagram like canvas and it simple image with white background black canvas`,
-                                    n: 1,
-                                    size: "1024x1024",
-                              });
-
-                              console.log("Open AI response:", response);
-
-
-
-                              return res.status(200).json({
-                                    success: true,
-                                    message: "File uploaded and saved successfully.",
-                                    response: response,
-                                    insights: result,
-                                    text: text
-                              });
-                              
-                        }
-
-
-                        catch (uploadError) {
-                              console.error("Error uploading file to Google AI:", uploadError);
-                              return res.status(500).send("Error uploading file to Google AI.");
-                        }
- 
-
-                  // });
-
-                });
-      
-                  
-     
-
-            return res;
-      } 
-      catch (error) {
-            console.error(error);
-            res.status(500).send("Error generating insights");
-            
+        /*** Parse form data (wrapped in a promise) ***/
+        const { fields, files } = await new Promise<{ fields: any; files: any }>((resolve, reject) => {
+          const form = new IncomingForm({
+            keepExtensions: true,
+            uploadDir: "/temp", // Use /tmp for serverless storage
+          });
+    
+          form.parse(req, (err, fields, files) => {
+            if (err) reject(err);
+            else resolve({ fields, files });
+          });
+        });
+    
+        if (!files.imageFile?.[0]) {
+          return res.status(400).json({ message: "No file uploaded." });
+        }
+    
+        const file = files.imageFile[0];
+        const tempPath = `/temp/${file.originalFilename}`;
+    
+        /*** Move file to /tmp/ ***/
+        await fs.promises.rename(file.filepath, tempPath);
+    
+        console.log("File saved at:", tempPath);
+    
+        /*** Upload to Google AI (Promise-based) ***/
+        const uploadResult = await fileManager.uploadFile(tempPath, {
+          mimeType: file.mimetype as string,
+          displayName: file.originalFilename as string,
+        });
+    
+        console.log("File uploaded:", uploadResult);
+    
+        /*** Generate insights using Gemini ***/
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+        const result = await model.generateContent([
+          "Give me insights in text format from the image to generate a piping and instrument diagram.",
+          {
+            fileData: {
+              fileUri: uploadResult.file.uri,
+              mimeType: uploadResult.file.mimeType,
+            },
+          },
+        ]);
+    
+        console.log("Insights result:", result);
+    
+        const text =
+          result?.response?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    
+        /*** Generate image using OpenAI ***/
+        const response = await openai.images.generate({
+          model: "dall-e-3",
+          prompt: `${text} - Generate a simple piping and instrument diagram on a white background with a black canvas.`,
+          n: 1,
+          size: "1024x1024",
+        });
+    
+        console.log("OpenAI Response:", response);
+    
+        /*** Final Response ***/
+        return res.status(200).json({
+          success: true,
+          message: "File uploaded and processed successfully.",
+          response,
+          insights: result,
+          text,
+        });
+      } catch (error) {
+        console.error("Error:", error);
+        return res.status(502).json({ message: "Bad Gateway. Error processing the request." });
       }
-
-
-}
+    }
